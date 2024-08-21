@@ -44,5 +44,14 @@
 
       nixosModules.default = import ./lancache.nix;
 
-    }));
+    }))
+    // (
+      let
+        lancache = import ./lancache.nix;
+      in
+      {
+        nixosModules.default = lancache;
+        nixosModules.lancache = lancache;
+      }
+    );
 }
