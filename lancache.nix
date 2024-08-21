@@ -259,10 +259,11 @@ with lib.options;
               #   include /etc/nginx/stream-enabled/*; # the docker file linkes 10_sni.conf into stream-enabled
               # }
 
-              #stream.d/log_format.conf
-              log_format stream_basic '$remote_addr [$time_local] $protocol $status $ssl_preread_server_name $bytes_sent $bytes_received $session_time';
 
               stream {
+                #stream.d/log_format.conf
+                log_format stream_basic '$remote_addr [$time_local] $protocol $status $ssl_preread_server_name $bytes_sent $bytes_received $session_time';
+
                 # etc/nginx/stream-available(enabled)/10_sni.conf
                 server {
                   listen 443 default_server;
