@@ -215,24 +215,38 @@
 
                       # conf.d/30_maps.conf
                       # map goes here
+                    '';
+                  # include /etc/nginx/sites-enabled/*.conf;
+                  # 10_generic.conf
 
-                      # include /etc/nginx/sites-enabled/*.conf;
-                      # 10_generic.conf
+                  # Primary monolithic cache engine
+                  virtualHosts.generic = {
 
-                      # Primary monolithic cache engine
+                    listen = [
+                      {
+                        addr = "0.0.0.0";
+                        port = 80;
+                        extraParameters = [ "reuseport" ];
+                      }
+                      {
+                        addr = "[::]";
+                        port = 80;
+                        extraParameters = [ "reuseport" ];
+                      }
+                    ];
 
-                      server {
-                        listen 80 reuseport;
-                        listen [::]:80 reuseport;
-
+                    extraConfig = # nginx
+                      ''
                         access_log /data/logs/access.log cachelog;
                         error_log /data/logs/error.log;
 
                         # sites-available/cache.conf.d/10_root.conf
                         resolver ${upstreamDns} ipv6=off;
+                      '';
 
-                        location / {
-
+                    locations."/" = {
+                      extraConfig = # nginx
+                        ''
                           # include /etc/nginx/sites-available/cache.conf.d/root/*.conf;
 
                           # cache.conf.d/root/10_loop_detection.conf
@@ -272,7 +286,7 @@
 
                           # Enable cache revalidation
                           proxy_cache_revalidate on;
-                          
+
                           # Don't cache requests marked as nocache=1
                           proxy_cache_bypass $arg_nocache;
 
@@ -281,7 +295,7 @@
 
                           # cache.conf.d/root/30_cache_key.conf 
                           proxy_cache_key      $cacheidentifier$uri$slice_range;
-                          
+
                           # 40_etags.conf 
                           # Battle.net Fix
                           proxy_hide_header ETag;
@@ -312,52 +326,57 @@
                           add_header X-Upstream-Status $upstream_status;
                           add_header X-Upstream-Response-Time $upstream_response_time;
                           add_header X-Upstream-Cache-Status $upstream_cache_status;
+                        '';
+                    };
+                    # 20_lol.conf
+                    # Fix for League of Legends Updater
+                    locations."~ ^.+(releaselisting_.*|.version$)" = {
+                      proxyPass = "http://$host";
+                    };
 
+                    # 21_arenanet_manifest.conf
+                    # Fix for GW2 manifest
+                    locations."^~ /latest64" = {
+                      proxyPass = "http://$host$request_uri";
+                      extraConfig = ''
+                        proxy_cache_bypass 1;
+                        proxy_no_cache 1;
+                      '';
+                    };
 
+                    # 22_wsus_cabs.conf
+                    # Fix for WSUS authroot cab files
+                    locations."~* (authrootstl.cab|pinrulesstl.cab|disallowedcertstl.cab)$" = {
+                      proxyPass = "http://$host$request_uri";
+                      extraConfig = ''
+                        proxy_cache_bypass 1;
+                        proxy_no_cache 1;
+                      '';
+                    };
 
-                        }
+                    # 23_steam_server_status.conf 
+                    locations."= /server-status" = {
+                      extraConfig = ''
+                        proxy_cache_bypass 1;
+                        proxy_no_cache 1;
+                      '';
+                    };
 
-                        # 20_lol.conf
-                        # Fix for League of Legends Updater
-                        location ~ ^.+(releaselisting_.*|.version$) {
-                          proxy_pass http://$host;
-                        }
-
-                        # 21_arenanet_manifest.conf
-                        # Fix for GW2 manifest
-                        location ^~ /latest64 {
-                          proxy_cache_bypass 1;
-                          proxy_no_cache 1;
-                          proxy_pass http://$host$request_uri;
-                        }
-
-                        # 22_wsus_cabs.conf
-                        # Fix for WSUS authroot cab files
-                        location ~* (authrootstl.cab|pinrulesstl.cab|disallowedcertstl.cab)$ {
-                          proxy_cache_bypass 1;
-                          proxy_no_cache 1;
-                          proxy_pass http://$host$request_uri;
-                        }
-
-                        # 23_steam_server_status.conf 
-                        location = /server-status {
-                          proxy_no_cache 1;
-                          proxy_cache_bypass 1;
-                        }
-
-                        # 90_lancache_heartbeat.conf
-                        location = /lancache-heartbeat {
+                    # 90_lancache_heartbeat.conf
+                    locations." = /lancache-heartbeat" = {
+                      extraConfig =
+                        #nginx
+                        ''
                           add_header X-LanCache-Processed-By $hostname;
-                          include /etc/nginx/sites-available/cache.conf.d/root/99_gnu.conf;
+                          add_header X-Clacks-Overhead "GNU Terry Pratchett, GNU Zoey -Crabbey- Lough";
+                          proxy_set_header X-Clacks-Overhead "GNU Terry Pratchett, GNU Zoey -Crabbey- Lough";
                           add_header 'Access-Control-Expose-Headers' '*';
                           add_header 'Access-Control-Allow-Origin' '*';
-                          return 204;
-                        }
+                        '';
+                      return = 204;
+                    };
 
-                        #include /etc/nginx/sites-available/cache.conf.d/*.conf;
-                      }
-
-                    '';
+                  };
                   # 30_metrics.conf 
                   # Metrics endpoint
                   virtualHosts.metrics = {
