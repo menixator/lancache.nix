@@ -174,6 +174,7 @@
                     '';
 
                   recommendedOptimisation = true;
+                  recommendedGzipSettings = true;
 
                   appendHttpConfig = # nginx
                     ''
