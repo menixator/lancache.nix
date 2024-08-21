@@ -317,12 +317,12 @@ with lib.options;
               {
                 addr = "0.0.0.0";
                 port = 80;
-                extraParameters = [ "reuseport" ];
+                extraParameters = [ "reuseport" "default_server" ];
               }
               {
                 addr = "[::]";
                 port = 80;
-                extraParameters = [ "reuseport" ];
+                extraParameters = [ "reuseport" "default_server" ];
               }
             ];
 
