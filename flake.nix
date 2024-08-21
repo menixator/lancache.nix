@@ -159,6 +159,10 @@
               cacheMaxAge = "3560d";
               minFreeDisk = "10g";
               logFormat = "cachelog";
+              # change this lol
+              cacheLocation = "/var/cache/nginx";
+              # TODO: might have to create this
+              logPrefix = "/var/log/nginx/lancache";
             in
 
             [
@@ -211,7 +215,7 @@
 
 
                       # conf.d/20_proxy_cache_path.conf
-                      proxy_cache_path /data/cache/cache levels=2:2 keys_zone=generic:${cacheIndexSize} inactive=${cacheMaxAge} max_size=${cacheDiskSize} min_free=${minFreeDisk} loader_files=1000 loader_sleep=50ms loader_threshold=300ms use_temp_path=off;
+                      proxy_cache_path ${cacheLocation} levels=2:2 keys_zone=generic:${cacheIndexSize} inactive=${cacheMaxAge} max_size=${cacheDiskSize} min_free=${minFreeDisk} loader_files=1000 loader_sleep=50ms loader_threshold=300ms use_temp_path=off;
 
                       # conf.d/30_maps.conf
                       # map goes here
@@ -238,8 +242,8 @@
 
                     extraConfig = # nginx
                       ''
-                        access_log /data/logs/access.log cachelog;
-                        error_log /data/logs/error.log;
+                        access_log ${logPrefix}/access.log cachelog;
+                        error_log ${logPrefix}/error.log;
 
                         # sites-available/cache.conf.d/10_root.conf
                         resolver ${upstreamDns} ipv6=off;
@@ -417,8 +421,8 @@
                         ''
                           # No access_log tracking as all requests to this instance are already logged through monolithic
 
-                          access_log /data/logs/upstream-access.log ${logFormat};
-                          error_log /data/logs/upstream-error.log;
+                          access_log ${logPrefix}/upstream-access.log ${logFormat};
+                          error_log ${logPrefix}/upstream-error.log;
 
                           #include /etc/nginx/sites-available/upstream.conf.d/*.conf;
                           #10_resolver.conf
@@ -485,8 +489,8 @@
                         proxy_pass  $ssl_preread_server_name:443;
                         ssl_preread on;
 
-                        access_log /data/logs/stream-access.log stream_basic;
-                        error_log /data/logs/stream-error.log;
+                        access_log ${logPrefix}/stream-access.log stream_basic;
+                        error_log ${logPrefix}/stream-error.log;
                       }
                     '';
                 };
