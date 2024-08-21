@@ -569,7 +569,7 @@ with lib.options;
 
               # etc/nginx/stream-available(enabled)/10_sni.conf
               server {
-                listen 443;
+                listen 443 reuseport;
                 resolver ${cfg.upstreamDns} ipv6=off;
                 proxy_pass  $ssl_preread_server_name:443;
                 ssl_preread on;
