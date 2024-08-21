@@ -359,53 +359,6 @@
                         #include /etc/nginx/sites-available/cache.conf.d/*.conf;
                       }
 
-                      # 20_upstream.conf
-                      # Upstream server to proxy and handle inconsistent 302 redirects
-                      # All cache traffic is passed through this proxy to allow rewriting of redirects without caching
-
-                      # This is particularly important for sony / ps5 as upstreams redirect between them which confuses slice map on caching
-
-                      server {
-
-                        # Internal bind on 3128, this should not be externally mapped
-                        listen localhost:3128 reuseport;
-
-                        # No access_log tracking as all requests to this instance are already logged through monolithic
-
-                         access_log /data/logs/upstream-access.log ${logFormat};
-                        error_log /data/logs/upstream-error.log;
-
-                        #include /etc/nginx/sites-available/upstream.conf.d/*.conf;
-                      #10_resolver.conf
-                        resolver ${upstreamDns} ipv6=off;
-
-                      #20_tracking.conf
-                        # Header to track if resolved from upstream or 302 redirect
-                        set $orig_loc 'upstream';
-                      #30_primary_proxy.conf
-                        # Proxy all requests to upstream
-                        location / {
-                          # Simple proxy the request
-                          proxy_pass http://$host$request_uri;
-
-                          # Catch the errors to process the redirects
-                          proxy_intercept_errors on;
-                          error_page 301 302 307 = @upstream_redirect;
-                        }
-                        #40_redirect_proxy.conf
-                        # Special location block to handle 302 redirects
-                        location @upstream_redirect {
-                          # Upstream_http_location contains the Location: redirection from the upstream server
-                          set $saved_upstream_location '$upstream_http_location';
-
-                          # Set debug header
-                          set $orig_loc 'upstream-302';
-
-                          # Pass to proxy and reproxy the request
-                          proxy_pass $saved_upstream_location;
-                        }
-                      }
-
                       # 30_metrics.conf 
                       # Metrics endpoint
 
@@ -417,6 +370,76 @@
                         }
                       }
                     '';
+                  virtualHosts.upstream =
+                    # 20_upstream.conf
+                    # Upstream server to proxy and handle inconsistent 302 redirects
+                    # All cache traffic is passed through this proxy to allow rewriting of redirects without caching
+
+                    # This is particularly important for sony / ps5 as upstreams redirect between them which confuses slice map on caching
+                    {
+                      # Internal bind on 3128, this should not be externally mapped
+                      listen = [
+                        {
+                          addr = "localhost";
+                          port = 3128;
+                          extraParameters = [ "reuseport" ];
+                        }
+                      ];
+
+                      extraConfig =
+                        # nginx
+                        ''
+                          # No access_log tracking as all requests to this instance are already logged through monolithic
+
+                          access_log /data/logs/upstream-access.log ${logFormat};
+                          error_log /data/logs/upstream-error.log;
+
+                          #include /etc/nginx/sites-available/upstream.conf.d/*.conf;
+                          #10_resolver.conf
+                          resolver ${upstreamDns} ipv6=off;
+
+                          #20_tracking.conf
+                          # Header to track if resolved from upstream or 302 redirect
+                          set $orig_loc 'upstream';
+                        '';
+
+                      #30_primary_proxy.conf
+                      # Proxy all requests to upstream
+                      locations = {
+                        "/" = {
+                          # Simple proxy the request
+                          proxyPass = "http://$host$request_uri";
+
+                          extraConfig =
+                            # nginx
+                            ''
+                              # Catch the errors to process the redirects
+                              proxy_intercept_errors on;
+                              error_page 301 302 307 = @upstream_redirect;
+                            '';
+
+                        };
+
+                        #40_redirect_proxy.conf
+                        # Special location block to handle 302 redirects
+                        "@upstream_redirect" = {
+
+                          # Pass to proxy and reproxy the request
+                          proxyPass = "$saved_upstream_location";
+
+                          extraConfig =
+                            #nginx
+                            ''
+                              # Upstream_http_location contains the Location: redirection from the upstream server
+                              set $saved_upstream_location '$upstream_http_location';
+
+                              # Set debug header
+                              set $orig_loc 'upstream-302';
+                            '';
+
+                        };
+                      };
+                    };
                   streamConfig = # nginx
                     ''
                       # stream settings
