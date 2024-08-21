@@ -188,7 +188,7 @@ with lib.options;
           entry
           // {
             domains = lib.pipe entry.domain_files [
-              (map (fileName: (domainsPackage + "/" + fileName)))
+              (map (fileName: (cfg.domainsPackage + "/" + fileName)))
               (map fetchAndTransformHosts)
               (lib.flatten)
             ];
