@@ -316,16 +316,18 @@ with lib.options;
               #stream.d/log_format.conf
               log_format stream_basic '$remote_addr [$time_local] $protocol $status $ssl_preread_server_name $bytes_sent $bytes_received $session_time';
 
-              # etc/nginx/stream-available(enabled)/10_sni.conf
-              server {
-                listen 443 default_server;
-                server_name _;
-                resolver ${cfg.upstreamDns} ipv6=off;
-                proxy_pass  $ssl_preread_server_name:443;
-                ssl_preread on;
+              stream {
+                # etc/nginx/stream-available(enabled)/10_sni.conf
+                server {
+                  listen 443 default_server;
+                  server_name _;
+                  resolver ${cfg.upstreamDns} ipv6=off;
+                  proxy_pass  $ssl_preread_server_name:443;
+                  ssl_preread on;
 
-                access_log ${cfg.logPrefix}/stream-access.log stream_basic;
-                error_log ${cfg.logPrefix}/stream-error.log;
+                  access_log ${cfg.logPrefix}/stream-access.log stream_basic;
+                  error_log ${cfg.logPrefix}/stream-error.log;
+                }
               }
 
             '';
@@ -578,8 +580,6 @@ with lib.options;
                 };
               };
             };
-          streamConfig = # nginx
-            '''';
         };
       };
 }
