@@ -189,7 +189,7 @@ with lib.options;
           ]
       );
 
-      fetchAndTransformHosts =
+      fetchHosts =
         file:
         lib.pipe file [
           builtins.readFile
@@ -207,6 +207,7 @@ with lib.options;
           // {
             domains = lib.pipe entry.domain_files [
               (map (fileName: (cfg.domainsPackage + "/" + fileName)))
+              (map fetchHosts)
               (lib.flatten)
             ];
           }
@@ -219,7 +220,7 @@ with lib.options;
           map (host: {
             cacheKey = entry.name;
             inherit host;
-          }) ( map convertIntoRegex entry.domains)
+          }) map convertIntoRegex  entry.domains
         ))
         (lib.flatten)
         (map (mapEntry: ''~.*£££.*?${mapEntry.host} ${mapEntry.cacheKey};''))
