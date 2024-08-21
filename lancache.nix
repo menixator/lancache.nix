@@ -558,14 +558,14 @@ with lib.options;
               };
             };
 
-            streamConfig = 
-            /*
+          /*
+            streamConfig =
             #nix
             ''
 
               # stream settings
               # goes in cfg.streamConfig
-              # stream {                                
+              # stream {
               #   include /etc/nginx/stream.d/*.conf; # there is nothing there
               #   include /etc/nginx/stream-enabled/*; # the docker file linkes 10_sni.conf into stream-enabled
               # }
@@ -585,7 +585,7 @@ with lib.options;
                   error_log ${cfg.logPrefix}/stream-error.log;
                 }
             '';
-            */
+          */
         };
       };
 }
