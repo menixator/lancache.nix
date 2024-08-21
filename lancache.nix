@@ -220,7 +220,7 @@ with lib.options;
           map (host: {
             cacheKey = entry.name;
             inherit host;
-          }) map convertIntoRegex  entry.domains
+          }) (map convertIntoRegex entry.domains)
         ))
         (lib.flatten)
         (map (mapEntry: ''~.*£££.*?${mapEntry.host} ${mapEntry.cacheKey};''))
