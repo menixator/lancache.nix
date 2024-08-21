@@ -255,10 +255,15 @@ with lib.options;
           recommendedOptimisation = true;
           recommendedGzipSettings = true;
 
-          appendHttpConfig = # nginx
+          appendConfig =
+            #nginx
             ''
               # workers.conf
               worker_processes ${builtins.toString cfg.workerProcesses};
+            '';
+
+          appendHttpConfig = # nginx
+            ''
               aio threads;
 
 
