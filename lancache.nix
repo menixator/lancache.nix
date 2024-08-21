@@ -195,7 +195,6 @@ with lib.options;
           builtins.readFile
           (lib.splitString "\n")
           (builtins.filter isNonEmpty)
-          (map convertIntoRegex)
         ];
 
       index = lib.pipe (cfg.domainsPackage + "/cache_domains.json") [
@@ -208,7 +207,6 @@ with lib.options;
           // {
             domains = lib.pipe entry.domain_files [
               (map (fileName: (cfg.domainsPackage + "/" + fileName)))
-              (map fetchAndTransformHosts)
               (lib.flatten)
             ];
           }
@@ -221,7 +219,7 @@ with lib.options;
           map (host: {
             cacheKey = entry.name;
             inherit host;
-          }) entry.domains
+          }) ( map convertIntoRegex entry.domains)
         ))
         (lib.flatten)
         (map (mapEntry: ''~.*£££.*?${mapEntry.host} ${mapEntry.cacheKey};''))
