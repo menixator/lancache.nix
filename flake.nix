@@ -37,6 +37,7 @@
             ]
             domain
           ) != ""
+          && ((builtins.substring 0 1 domain) != "#")
         );
 
         convertIntoRegex = (
@@ -95,15 +96,13 @@
             ];
           in
 
-          # TODO: stop using euro sign here
-          pkgs.writeText "lancache-cache-maps.conf"
-            # nginx
-            ''
-              map "$http_user_agent£££$http_host" $cacheidentifier {
-                  default $http_host;
-                  ${mapEntries}
-              }
-            '';
+          # nginx
+          ''
+            map "$http_user_agent£££$http_host" $cacheidentifier {
+                default $http_host;
+                ${mapEntries}
+            }
+          '';
 
         # builtins.storePath
         # https://www.nmattia.com/posts/2019-10-08-runtime-dependencies/
@@ -215,6 +214,7 @@
 
                       # conf.d/30_maps.conf
                       # map goes here
+                      ${nginxMap}
                     '';
                   # include /etc/nginx/sites-enabled/*.conf;
                   # 10_generic.conf
