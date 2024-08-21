@@ -305,6 +305,29 @@ with lib.options;
               # conf.d/10_log_format.conf
               log_format cachelog '[$cacheidentifier] $remote_addr / $http_x_forwarded_for - $remote_user [$time_local] "$request" $status $body_bytes_sent "$http_referer" "$http_user_agent" "$upstream_cache_status" "$host" "$http_range"';
               log_format cachelog-json escape=json '{"timestamp":"$msec","time_local":"$time_local","cache_identifier":"$cacheidentifier","remote_addr":"$remote_addr","forwarded_for":"$http_x_forwarded_for","remote_user":"$remote_user","status":"$status","bytes_sent":$body_bytes_sent,"referer":"$http_referer","user_agent":"$http_user_agent","upstream_cache_status":"$upstream_cache_status","host":"$host","http_range":"$http_range","method":"$request_method","path":"$request_uri","proto":"$server_protocol","scheme":"$scheme"}';
+
+              # stream settings
+              # goes in cfg.streamConfig
+              # stream {                                
+              #   include /etc/nginx/stream.d/*.conf; # there is nothing there
+              #   include /etc/nginx/stream-enabled/*; # the docker file linkes 10_sni.conf into stream-enabled
+              # }
+
+              #stream.d/log_format.conf
+              log_format stream_basic '$remote_addr [$time_local] $protocol $status $ssl_preread_server_name $bytes_sent $bytes_received $session_time';
+
+              # etc/nginx/stream-available(enabled)/10_sni.conf
+              server {
+                listen 443 default_server;
+                server_name _;
+                resolver ${cfg.upstreamDns} ipv6=off;
+                proxy_pass  $ssl_preread_server_name:443;
+                ssl_preread on;
+
+                access_log ${cfg.logPrefix}/stream-access.log stream_basic;
+                error_log ${cfg.logPrefix}/stream-error.log;
+              }
+
             '';
           # include /etc/nginx/sites-enabled/*.conf;
           # 10_generic.conf
@@ -556,29 +579,7 @@ with lib.options;
               };
             };
           streamConfig = # nginx
-            ''
-              # stream settings
-              # goes in cfg.streamConfig
-              # stream {                                
-              #   include /etc/nginx/stream.d/*.conf; # there is nothing there
-              #   include /etc/nginx/stream-enabled/*; # the docker file linkes 10_sni.conf into stream-enabled
-              # }
-
-              #stream.d/log_format.conf
-              log_format stream_basic '$remote_addr [$time_local] $protocol $status $ssl_preread_server_name $bytes_sent $bytes_received $session_time';
-
-              # etc/nginx/stream-available(enabled)/10_sni.conf
-              server {
-                listen 443 default_server;
-                server_name _;
-                resolver ${cfg.upstreamDns} ipv6=off;
-                proxy_pass  $ssl_preread_server_name:443;
-                ssl_preread on;
-
-                access_log ${cfg.logPrefix}/stream-access.log stream_basic;
-                error_log ${cfg.logPrefix}/stream-error.log;
-              }
-            '';
+            '''';
         };
       };
 }
