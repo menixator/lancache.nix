@@ -359,17 +359,24 @@
                         #include /etc/nginx/sites-available/cache.conf.d/*.conf;
                       }
 
-                      # 30_metrics.conf 
-                      # Metrics endpoint
-
-                      server {
-                        listen 8080 reuseport;
-
-                        location = /nginx_status {
-                          stub_status;
-                        }
-                      }
                     '';
+                  # 30_metrics.conf 
+                  # Metrics endpoint
+                  virtualHosts.metrics = {
+                    listen = [
+                      {
+                        port = 8080;
+                        extraParameters = [ "reuseport" ];
+                      }
+                    ];
+
+                    location."/nginx_status" = {
+                      extraConfig = ''
+                        stub_status;
+                      '';
+                    };
+
+                  };
                   virtualHosts.upstream =
                     # 20_upstream.conf
                     # Upstream server to proxy and handle inconsistent 302 redirects
