@@ -163,6 +163,8 @@
               cacheLocation = "/var/cache/nginx";
               # TODO: might have to create this
               logPrefix = "/var/log/nginx/lancache";
+              sliceSize = "1m";
+              workerProcesses = 16;
             in
 
             [
@@ -183,7 +185,7 @@
                   appendHttpConfig = # nginx
                     ''
                       # workers.conf
-                      worker_processes 16;
+                      worker_processes ${builtins.toString workerProcesses};
                       aio threads;
 
 
@@ -265,7 +267,7 @@
 
                           # cache.conf.d/root/20_cache.conf
                           # Cache Location
-                          slice 1m;
+                          slice ${sliceSize};
                           proxy_cache generic;
 
                           proxy_ignore_headers Expires Cache-Control;
