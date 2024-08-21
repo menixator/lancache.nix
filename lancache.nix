@@ -222,7 +222,7 @@ with lib.options;
     lib.mkIf cfg.enable
 
       {
-        services.lancache.domainIndex = domainIndex;
+        services.lancache.domainIndex = mapEntries;
 
         services.nginx = {
           enable = true;
