@@ -250,31 +250,6 @@ with lib.options;
               worker_connections 4096;
               multi_accept on;
               use epoll;
-              }
-
-              # stream settings
-              # goes in cfg.streamConfig
-              # stream {                                
-              #   include /etc/nginx/stream.d/*.conf; # there is nothing there
-              #   include /etc/nginx/stream-enabled/*; # the docker file linkes 10_sni.conf into stream-enabled
-              # }
-
-
-              stream {
-                #stream.d/log_format.conf
-                log_format stream_basic '$remote_addr [$time_local] $protocol $status $ssl_preread_server_name $bytes_sent $bytes_received $session_time';
-
-                # etc/nginx/stream-available(enabled)/10_sni.conf
-                server {
-                  listen 443 default_server;
-                  server_name _;
-                  resolver ${cfg.upstreamDns} ipv6=off;
-                  proxy_pass  $ssl_preread_server_name:443;
-                  ssl_preread on;
-
-                  access_log ${cfg.logPrefix}/stream-access.log stream_basic;
-                  error_log ${cfg.logPrefix}/stream-error.log;
-                }
             '';
 
           recommendedOptimisation = true;
@@ -582,6 +557,35 @@ with lib.options;
                 };
               };
             };
+
+            streamConfig = 
+            /*
+            #nix
+            ''
+
+              # stream settings
+              # goes in cfg.streamConfig
+              # stream {                                
+              #   include /etc/nginx/stream.d/*.conf; # there is nothing there
+              #   include /etc/nginx/stream-enabled/*; # the docker file linkes 10_sni.conf into stream-enabled
+              # }
+
+                #stream.d/log_format.conf
+                log_format stream_basic '$remote_addr [$time_local] $protocol $status $ssl_preread_server_name $bytes_sent $bytes_received $session_time';
+
+                # etc/nginx/stream-available(enabled)/10_sni.conf
+                server {
+                  listen 443 default_server;
+                  server_name _;
+                  resolver ${cfg.upstreamDns} ipv6=off;
+                  proxy_pass  $ssl_preread_server_name:443;
+                  ssl_preread on;
+
+                  access_log ${cfg.logPrefix}/stream-access.log stream_basic;
+                  error_log ${cfg.logPrefix}/stream-error.log;
+                }
+            '';
+            */
         };
       };
 }
