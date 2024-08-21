@@ -167,10 +167,6 @@
               {
                 services.nginx = {
                   enable = true;
-                  config = ''
-                    # workers.conf
-                    worker_processes 16;
-                  '';
                   eventsConfig = # nginx
                     ''
                       worker_connections 4096;
@@ -180,8 +176,10 @@
 
                   recommendedOptimisation = true;
 
-                  httpConfig = # nginx
+                  appendHttpConfig = # nginx
                     ''
+                      # workers.conf
+                      worker_processes 16;
                       aio threads;
 
 
@@ -365,6 +363,7 @@
                   virtualHosts.metrics = {
                     listen = [
                       {
+                        addr = "localhost";
                         port = 8080;
                         extraParameters = [ "reuseport" ];
                       }
