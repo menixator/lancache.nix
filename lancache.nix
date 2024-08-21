@@ -1,4 +1,4 @@
-{ lib, ... }:
+{ lib, pkgs, ... }:
 with lib.types;
 with lib.options;
 {
@@ -129,6 +129,12 @@ with lib.options;
         };
       };
 
+      domainIndex = lib.mkOption {
+        type = lib.types.listOf types.attrs;
+        visible = false;
+        readOnly = true;
+        description = "Parsed domains list";
+      };
     };
   };
 
@@ -203,7 +209,7 @@ with lib.options;
         (lib.concatStringsSep "\n    ")
       ];
 
-      nginxMap =
+      cacheIdentifierMap =
         # nginx
         ''
           map "$http_user_agent£££$http_host" $cacheidentifier {
@@ -216,6 +222,8 @@ with lib.options;
     lib.mkIf cfg.enable
 
       {
+        services.lancache.domainIndex = domainIndex;
+
         services.nginx = {
           enable = true;
           eventsConfig = # nginx
@@ -267,7 +275,7 @@ with lib.options;
 
               # conf.d/30_maps.conf
               # map goes here
-              ${nginxMap}
+              ${cacheIdentifierMap}
             '';
           # include /etc/nginx/sites-enabled/*.conf;
           # 10_generic.conf

@@ -42,5 +42,7 @@
         in
         nginx-conf;
 
+      nixosModules.default = import ./lancache.nix;
+
     }));
 }
