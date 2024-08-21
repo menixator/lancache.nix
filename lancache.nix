@@ -1,4 +1,9 @@
-{ lib, pkgs, config, ... }:
+{
+  lib,
+  pkgs,
+  config,
+  ...
+}:
 with lib.types;
 with lib.options;
 {
@@ -135,6 +140,20 @@ with lib.options;
         readOnly = true;
         description = "Parsed domains list";
       };
+
+      workerProcesses =
+        lib.mkOption {
+          type = lib.types.oneOf [
+            (types.enum [ "auto" ])
+            (types.ints.u32)
+          ];
+          description = "Defines the number of worker processes.";
+          default = "auto";
+        }
+        // {
+          apply = (builtins.toString);
+        };
+
     };
   };
 
@@ -239,7 +258,7 @@ with lib.options;
           appendHttpConfig = # nginx
             ''
               # workers.conf
-              worker_processes ${builtins.toString workerProcesses};
+              worker_processes ${builtins.toString cfg.workerProcesses};
               aio threads;
 
 
