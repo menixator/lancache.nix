@@ -370,7 +370,7 @@
                       }
                     ];
 
-                    location."/nginx_status" = {
+                    locations."/nginx_status" = {
                       extraConfig = ''
                         stub_status;
                       '';
