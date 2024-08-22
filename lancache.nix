@@ -242,6 +242,9 @@ with lib.options;
       {
         services.lancache.domainIndex = index;
 
+        # TODO: only add this if this isn't a path nginx can write to
+        systemd.services.nginx.serviceConfig.ReadWritePaths = cfg.cacheLocation;
+
         services.nginx = {
           enable = true;
           eventsConfig = # nginx
@@ -317,12 +320,18 @@ with lib.options;
               {
                 addr = "0.0.0.0";
                 port = 80;
-                extraParameters = [ "reuseport" "default_server" ];
+                extraParameters = [
+                  "reuseport"
+                  "default_server"
+                ];
               }
               {
                 addr = "[::]";
                 port = 80;
-                extraParameters = [ "reuseport" "default_server" ];
+                extraParameters = [
+                  "reuseport"
+                  "default_server"
+                ];
               }
             ];
 
