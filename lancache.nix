@@ -316,16 +316,18 @@ with lib.options;
           # Primary monolithic cache engine
           virtualHosts.generic = {
 
-            listen = [
-              {
-                addr = "0.0.0.0";
-                port = 80;
-                extraParameters = [
-                  "reuseport"
-                  "default_server"
-                ];
-              }
-              {
+            listen =
+              [
+                {
+                  addr = "0.0.0.0";
+                  port = 80;
+                  extraParameters = [
+                    "reuseport"
+                    "default_server"
+                  ];
+                }
+              ]
+              ++ (lib.optional config.networking.enableIPv6 {
                 addr = "[::]";
                 port = 80;
                 extraParameters = [
@@ -333,7 +335,8 @@ with lib.options;
                   "default_server"
                 ];
               }
-            ];
+
+              );
 
             extraConfig = # nginx
               ''
