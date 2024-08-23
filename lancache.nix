@@ -154,6 +154,12 @@ with lib.options;
           apply = (builtins.toString);
         };
 
+      listenAddress = mkOption {
+        type = types.str;
+        description = ''
+          listenAddress for the main lancache server
+        '';
+      };
     };
   };
 
@@ -319,7 +325,7 @@ with lib.options;
             listen =
               [
                 {
-                  addr = "0.0.0.0";
+                  addr = cfg.listenAddress;
                   port = 80;
                   extraParameters = [
                     "reuseport"
@@ -327,6 +333,7 @@ with lib.options;
                   ];
                 }
               ]
+              # FIXME: add separate ip address for ipv6
               ++ (lib.optional config.networking.enableIPv6 {
                 addr = "[::]";
                 port = 80;
@@ -569,8 +576,7 @@ with lib.options;
               };
             };
 
-          /*
-            streamConfig =
+          streamConfig =
             #nix
             ''
 
@@ -586,7 +592,7 @@ with lib.options;
 
                 # etc/nginx/stream-available(enabled)/10_sni.conf
                 server {
-                  listen 443 default_server;
+                  listen ${cfg.listenAddress}:443 default_server;
                   server_name _;
                   resolver ${cfg.upstreamDns} ipv6=off;
                   proxy_pass  $ssl_preread_server_name:443;
@@ -596,7 +602,6 @@ with lib.options;
                   error_log ${cfg.logPrefix}/stream-error.log;
                 }
             '';
-          */
         };
       };
 }
