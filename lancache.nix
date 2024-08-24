@@ -147,7 +147,14 @@ with lib.options;
             (types.enum [ "auto" ])
             (types.ints.u32)
           ];
-          description = "Defines the number of worker processes.";
+          description = ''
+          Defines the number of worker processes.
+
+
+          Corresponds to the environment variable: `NGINX_WORKER_PROCESSES` in standard
+          lancache config.
+          
+          '';
           default = "auto";
         }
         // {
