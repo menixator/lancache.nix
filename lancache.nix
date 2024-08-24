@@ -256,7 +256,7 @@ with lib.options;
         services.lancache.domainIndex = index;
 
         # TODO: only add this if this isn't a path nginx can write to
-        systemd.services.nginx.serviceConfig.ReadWritePaths = cfg.cacheLocation;
+        systemd.services.nginx.serviceConfig.ReadWritePaths = [cfg.cacheLocation];
 
         services.nginx = {
           enable = true;
