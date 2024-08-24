@@ -5,11 +5,11 @@ This project aims to provide a lean configuration for users that want to run
 to running a docker container. 
 
 It is designed to run alongside your configuration while keeping feature-parity
-with the upstream project.
+with the [upstream](https://github.com/lancachenet/monolithic) project.
 
 
 
-The configurations are almost 1:1 and all credit for the nginx configurations
+The configurations are almost 1:1 [lancachenet/monolithic](https://github.com/lancachenet/monolithic) and all credit for the nginx configurations
 go to the lancache authors.
 
 
