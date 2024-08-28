@@ -245,6 +245,7 @@ with lib.options;
         ''
           map "$http_user_agent£££$http_host" $cacheidentifier {
               default $http_host;
+              ~Valve\/Steam\ HTTP\ Client\ 1\.0£££.* steam;
               ${mapEntries}
           }
         '';
