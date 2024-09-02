@@ -148,12 +148,12 @@ with lib.options;
             (types.ints.u32)
           ];
           description = ''
-          Defines the number of worker processes.
+            Defines the number of worker processes.
 
 
-          Corresponds to the environment variable: `NGINX_WORKER_PROCESSES` in standard
-          lancache config.
-          
+            Corresponds to the environment variable: `NGINX_WORKER_PROCESSES` in standard
+            lancache config.
+
           '';
           default = "auto";
         }
@@ -257,7 +257,7 @@ with lib.options;
         services.lancache.domainIndex = index;
 
         # TODO: only add this if this isn't a path nginx can write to
-        systemd.services.nginx.serviceConfig.ReadWritePaths = [cfg.cacheLocation];
+        systemd.services.nginx.serviceConfig.ReadWritePaths = [ cfg.cacheLocation ];
 
         services.nginx = {
           enable = true;
@@ -423,7 +423,7 @@ with lib.options;
                   proxy_next_upstream error timeout http_404;
 
                   # Proxy into the redirect handler
-                  proxy_pass http://127.0.0.1:3128$request_uri;
+                  proxy_pass http://${cfg.listenAddress}:3128$request_uri;
 
                   proxy_redirect off;
                   proxy_ignore_client_abort on;
@@ -523,7 +523,7 @@ with lib.options;
               # Internal bind on 3128, this should not be externally mapped
               listen = [
                 {
-                  addr = "localhost";
+                  addr = cfg.listenAddress;
                   port = 3128;
                   extraParameters = [ "reuseport" ];
                 }
