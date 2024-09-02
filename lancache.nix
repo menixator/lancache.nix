@@ -167,6 +167,14 @@ with lib.options;
           listenAddress for the main lancache server
         '';
       };
+
+      upstreamListenAddress = mkOption {
+        type = types.str;
+        default = "127.0.0.1";
+        description = ''
+          listenAddress for the upstream proxy
+        '';
+      };
     };
   };
 
@@ -423,7 +431,7 @@ with lib.options;
                   proxy_next_upstream error timeout http_404;
 
                   # Proxy into the redirect handler
-                  proxy_pass http://${cfg.listenAddress}:3128$request_uri;
+                  proxy_pass http://${cfg.upstreamListenAddress}:3128$request_uri;
 
                   proxy_redirect off;
                   proxy_ignore_client_abort on;
@@ -523,7 +531,7 @@ with lib.options;
               # Internal bind on 3128, this should not be externally mapped
               listen = [
                 {
-                  addr = cfg.listenAddress;
+                  addr = cfg.upstreamListenAddress;
                   port = 3128;
                   extraParameters = [ "reuseport" ];
                 }
