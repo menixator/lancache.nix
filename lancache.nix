@@ -76,7 +76,7 @@ with lib.options;
           available free space drops below the set amount for any reason, the cache
           server will begin pruning content to free up space. Specified in gigabytes.
 
-          Corresponds to the environment variable: `CACHE_MAX_AGE` in standard
+          Corresponds to the environment variable: `MIN_FREE_DISK` in standard
           lancache config.
         '';
       };
