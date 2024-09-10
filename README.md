@@ -108,7 +108,7 @@ services.lancache = {
 
 These two are the major services that should be exposed:
 - the catch-all http server that you can point the dns entries of cachable cdns to
-- a transparent TLS proxy listening on `listenAddress:443`
+- a transparent HTTPS proxy listening on `listenAddress:443`
 
 
 One thing to note is that if you are listening to `0.0.0.0` on any of your
