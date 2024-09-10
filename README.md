@@ -93,14 +93,11 @@ services.lancache = {
   */
   logFormat = "cachelog";
 
-  domainsPackage = mkOption {
-    type = types.package;
-    default = pkgs.fetchFromGitHub {
-      owner = "uklans";
-      repo = "cache-domains";
-      rev = "1f5897f4dacf3dab5f4d6fca2fe497d3327eaea9";
-      sha256 = "sha256-xrHuYIrGSzsPtqErREMZ8geawvtYcW6h2GyeGMw1I88=";
-    };
+  domainsPackage = pkgs.fetchFromGitHub {
+    owner = "uklans";
+    repo = "cache-domains";
+    rev = "1f5897f4dacf3dab5f4d6fca2fe497d3327eaea9";
+    sha256 = "sha256-xrHuYIrGSzsPtqErREMZ8geawvtYcW6h2GyeGMw1I88=";
   };
 
   # Defines the number of worker processes.
