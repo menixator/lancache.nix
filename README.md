@@ -4,12 +4,12 @@ This project aims to provide a lean configuration for users that want to run
 [lancache](https://lancache.net) on their nix machines without having to resort
 to running a docker container. 
 
-It is designed to run alongside your configuration while keeping feature-parity
+It is designed to run alongside your configurations while keeping feature-parity
 with the [upstream](https://github.com/lancachenet/monolithic) project.
 
 
 
-The configurations are almost 1:1 [lancachenet/monolithic](https://github.com/lancachenet/monolithic) and all credit for the nginx configurations
+The configurations are almost 1:1 with [lancachenet/monolithic](https://github.com/lancachenet/monolithic) and all credit for the nginx configurations
 go to the lancache authors.
 
 
@@ -107,7 +107,7 @@ services.lancache = {
 
 
 These two are the major services that should be exposed:
-- the catch vhost that you can point the dns entries to cachable game-content cdns listening on `listenAddress:80`
+- the catch-all http server that you can point the dns entries of cachable cdns to
 - a transparent TLS proxy listening on `listenAddress:443`
 
 
