@@ -128,17 +128,11 @@ let
 in
 {
   services.adguardhome.settings.dns.rewrites =
-    map
-      (domain: {
-        inherit domain;
-        answer = lancacheServerIp;
-      })
-      (
-        lib.pipe config.services.lancache.domainIndex [
-          (map (entry: entry.domains))
-          lib.flatten
-        ]
-      );
+    lib.pipe config.services.lancache.domainIndex [
+      (map (entry: entry.domains))
+      lib.flatten
+      (map (domain: { inherit domain; answer = lancacheServerIp; }))
+    ]
 }
 ```
 
