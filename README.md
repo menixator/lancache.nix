@@ -105,6 +105,43 @@ services.lancache = {
 };
 ```
 
+## Adding the Slice Module to nginx
+
+Lancaching will require you to enable the http slice module for nginx.
+
+```nix
+{config, ...}: {
+  services.nginx.package = pkgs.nginxMainline.override { withSlice = true; };
+}
+```
+
+## Advertising the DNS entries
+
+How you advertise the dns entries that need to be rewritten is completely upto
+you. I use nix to dynamically populate the dns entries that are parsed by this
+flake into adguardhome.
+
+```nix
+{ config, lib, ... }:
+let
+  lancacheServerIp = "192.168.100.2";
+in
+{
+  services.adguardhome.settings.dns.rewrites =
+    map
+      (domain: {
+        inherit domain;
+        answer = lancacheServerIp;
+      })
+      (
+        lib.pipe config.services.lancache.domainIndex [
+          (map (entry: entry.domains))
+          lib.flatten
+        ]
+      );
+}
+```
+
 
 These two are the major services that should be exposed:
 - the catch-all http server that you can point the dns entries of cachable cdns to
