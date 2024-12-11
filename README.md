@@ -110,7 +110,7 @@ services.lancache = {
 Lancaching will require you to enable the http slice module for nginx.
 
 ```nix
-{config, ...}: {
+{pkgs, ...}: {
   services.nginx.package = pkgs.nginxMainline.override { withSlice = true; };
 }
 ```
