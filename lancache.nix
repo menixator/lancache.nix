@@ -593,7 +593,7 @@ with lib.options;
             };
 
           streamConfig =
-            #nix
+            #nginx
             ''
 
               # stream settings
