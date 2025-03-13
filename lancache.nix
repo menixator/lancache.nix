@@ -129,8 +129,8 @@ with lib.options;
         default = pkgs.fetchFromGitHub {
           owner = "uklans";
           repo = "cache-domains";
-          rev = "1f5897f4dacf3dab5f4d6fca2fe497d3327eaea9";
-          sha256 = "sha256-xrHuYIrGSzsPtqErREMZ8geawvtYcW6h2GyeGMw1I88=";
+          rev = "67594ce10c85250bf5e3cc3c6f4a0abb90abd25c";
+          sha256 = "sha256-MRyIz1l23B/ibVc1sPi6BwtB0imi47z1gqQxm5PM60Q=";
         };
       };
 
