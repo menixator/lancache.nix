@@ -117,10 +117,28 @@ with lib.options;
 
       # TODO: might have to create this
       logPrefix = mkOption {
-        type = types.str;
+        type = types.nullOr types.str;
         default = null;
         description = ''
-          Sets the location to put the cached data in
+          Directory for lancache log files (access, error, upstream, stream).
+          Must be set when logToSyslog is false.
+        '';
+      };
+
+      logToSyslog = mkOption {
+        type = types.bool;
+        default = false;
+        description = ''
+          Send all nginx log output to syslog instead of files.
+          On systemd-based systems (e.g. NixOS), journald captures syslog
+          messages automatically, so logs appear in `journalctl`.
+
+          Different nginx contexts use distinct syslog tags for filtering:
+          - `lancache` (primary cache engine)
+          - `lancache-upstream` (upstream redirect handler)
+          - `lancache-stream` (TLS SNI passthrough)
+
+          When this is true, logPrefix is not used.
         '';
       };
 
@@ -181,6 +199,46 @@ with lib.options;
   config =
     let
       cfg = config.services.lancache;
+
+      # Syslog targets with distinct tags per nginx context
+      syslogTarget =
+        tag: "syslog:server=unix:/dev/log,facility=local6,tag=${tag}";
+
+      genericAccessLog =
+        if cfg.logToSyslog then
+          "${syslogTarget "lancache"} cachelog"
+        else
+          "${cfg.logPrefix}/access.log cachelog";
+
+      genericErrorLog =
+        if cfg.logToSyslog then
+          syslogTarget "lancache"
+        else
+          "${cfg.logPrefix}/error.log";
+
+      upstreamAccessLog =
+        if cfg.logToSyslog then
+          "${syslogTarget "lancache-upstream"} ${cfg.logFormat}"
+        else
+          "${cfg.logPrefix}/upstream-access.log ${cfg.logFormat}";
+
+      upstreamErrorLog =
+        if cfg.logToSyslog then
+          syslogTarget "lancache-upstream"
+        else
+          "${cfg.logPrefix}/upstream-error.log";
+
+      streamAccessLog =
+        if cfg.logToSyslog then
+          "${syslogTarget "lancache-stream"} stream_basic"
+        else
+          "${cfg.logPrefix}/stream-access.log stream_basic";
+
+      streamErrorLog =
+        if cfg.logToSyslog then
+          syslogTarget "lancache-stream"
+        else
+          "${cfg.logPrefix}/stream-error.log";
 
       isNonEmpty = (
         domain:
@@ -262,6 +320,16 @@ with lib.options;
     lib.mkIf cfg.enable
 
       {
+        assertions = [
+          {
+            assertion = cfg.logToSyslog || cfg.logPrefix != null;
+            message = ''
+              services.lancache: either set logPrefix (for file-based logging)
+              or set logToSyslog = true (for syslog/journald logging).
+            '';
+          }
+        ];
+
         services.lancache.domainIndex = index;
 
         # TODO: only add this if this isn't a path nginx can write to
@@ -363,8 +431,8 @@ with lib.options;
 
             extraConfig = # nginx
               ''
-                access_log ${cfg.logPrefix}/access.log cachelog;
-                error_log ${cfg.logPrefix}/error.log;
+                access_log ${genericAccessLog};
+                error_log ${genericErrorLog};
 
                 # sites-available/cache.conf.d/10_root.conf
                 resolver ${cfg.upstreamDns} ipv6=off;
@@ -542,8 +610,8 @@ with lib.options;
                 ''
                   # No access_log tracking as all requests to this instance are already logged through monolithic
 
-                  access_log ${cfg.logPrefix}/upstream-access.log ${cfg.logFormat};
-                  error_log ${cfg.logPrefix}/upstream-error.log;
+                  access_log ${upstreamAccessLog};
+                  error_log ${upstreamErrorLog};
 
                   #include /etc/nginx/sites-available/upstream.conf.d/*.conf;
                   #10_resolver.conf
@@ -614,8 +682,8 @@ with lib.options;
                   proxy_pass  $ssl_preread_server_name:443;
                   ssl_preread on;
 
-                  access_log ${cfg.logPrefix}/stream-access.log stream_basic;
-                  error_log ${cfg.logPrefix}/stream-error.log;
+                  access_log ${streamAccessLog};
+                  error_log ${streamErrorLog};
                 }
             '';
         };
