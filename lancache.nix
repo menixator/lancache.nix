@@ -135,8 +135,8 @@ with lib.options;
 
           Different nginx contexts use distinct syslog tags for filtering:
           - `lancache` (primary cache engine)
-          - `lancache-upstream` (upstream redirect handler)
-          - `lancache-stream` (TLS SNI passthrough)
+          - `lancache_upstream` (upstream redirect handler)
+          - `lancache_stream` (TLS SNI passthrough)
 
           When this is true, logPrefix is not used.
         '';
@@ -218,25 +218,25 @@ with lib.options;
 
       upstreamAccessLog =
         if cfg.logToSyslog then
-          "${syslogTarget "lancache-upstream"} ${cfg.logFormat}"
+          "${syslogTarget "lancache_upstream"} ${cfg.logFormat}"
         else
           "${cfg.logPrefix}/upstream-access.log ${cfg.logFormat}";
 
       upstreamErrorLog =
         if cfg.logToSyslog then
-          syslogTarget "lancache-upstream"
+          syslogTarget "lancache_upstream"
         else
           "${cfg.logPrefix}/upstream-error.log";
 
       streamAccessLog =
         if cfg.logToSyslog then
-          "${syslogTarget "lancache-stream"} stream_basic"
+          "${syslogTarget "lancache_stream"} stream_basic"
         else
           "${cfg.logPrefix}/stream-access.log stream_basic";
 
       streamErrorLog =
         if cfg.logToSyslog then
-          syslogTarget "lancache-stream"
+          syslogTarget "lancache_stream"
         else
           "${cfg.logPrefix}/stream-error.log";
 
