@@ -200,45 +200,51 @@ with lib.options;
     let
       cfg = config.services.lancache;
 
-      # Syslog targets with distinct tags per nginx context
-      syslogTarget =
-        tag: "syslog:server=unix:/dev/log,facility=local6,tag=${tag}";
+      # Build access_log / error_log targets for each nginx context.
+      # When logToSyslog is enabled, logs go to syslog with a per-context tag;
+      # otherwise they go to files under logPrefix.
+      logTarget =
+        {
+          tag,
+          accessFile,
+          errorFile,
+          format ? null,
+        }:
+        let
+          syslog = "syslog:server=unix:/dev/log,facility=local6,tag=${tag}";
+          fmtSuffix = lib.optionalString (format != null) " ${format}";
+        in
+        {
+          access =
+            if cfg.logToSyslog then
+              "${syslog}${fmtSuffix}"
+            else
+              "${cfg.logPrefix}/${accessFile}${fmtSuffix}";
+          error =
+            if cfg.logToSyslog then
+              syslog
+            else
+              "${cfg.logPrefix}/${errorFile}";
+        };
 
-      genericAccessLog =
-        if cfg.logToSyslog then
-          "${syslogTarget "lancache"} cachelog"
-        else
-          "${cfg.logPrefix}/access.log cachelog";
-
-      genericErrorLog =
-        if cfg.logToSyslog then
-          syslogTarget "lancache"
-        else
-          "${cfg.logPrefix}/error.log";
-
-      upstreamAccessLog =
-        if cfg.logToSyslog then
-          "${syslogTarget "lancache_upstream"} ${cfg.logFormat}"
-        else
-          "${cfg.logPrefix}/upstream-access.log ${cfg.logFormat}";
-
-      upstreamErrorLog =
-        if cfg.logToSyslog then
-          syslogTarget "lancache_upstream"
-        else
-          "${cfg.logPrefix}/upstream-error.log";
-
-      streamAccessLog =
-        if cfg.logToSyslog then
-          "${syslogTarget "lancache_stream"} stream_basic"
-        else
-          "${cfg.logPrefix}/stream-access.log stream_basic";
-
-      streamErrorLog =
-        if cfg.logToSyslog then
-          syslogTarget "lancache_stream"
-        else
-          "${cfg.logPrefix}/stream-error.log";
+      genericLog = logTarget {
+        tag = "lancache";
+        accessFile = "access.log";
+        errorFile = "error.log";
+        format = "cachelog";
+      };
+      upstreamLog = logTarget {
+        tag = "lancache_upstream";
+        accessFile = "upstream-access.log";
+        errorFile = "upstream-error.log";
+        format = cfg.logFormat;
+      };
+      streamLog = logTarget {
+        tag = "lancache_stream";
+        accessFile = "stream-access.log";
+        errorFile = "stream-error.log";
+        format = "stream_basic";
+      };
 
       isNonEmpty = (
         domain:
@@ -431,8 +437,8 @@ with lib.options;
 
             extraConfig = # nginx
               ''
-                access_log ${genericAccessLog};
-                error_log ${genericErrorLog};
+                access_log ${genericLog.access};
+                error_log ${genericLog.error};
 
                 # sites-available/cache.conf.d/10_root.conf
                 resolver ${cfg.upstreamDns} ipv6=off;
@@ -610,8 +616,8 @@ with lib.options;
                 ''
                   # No access_log tracking as all requests to this instance are already logged through monolithic
 
-                  access_log ${upstreamAccessLog};
-                  error_log ${upstreamErrorLog};
+                  access_log ${upstreamLog.access};
+                  error_log ${upstreamLog.error};
 
                   #include /etc/nginx/sites-available/upstream.conf.d/*.conf;
                   #10_resolver.conf
@@ -682,8 +688,8 @@ with lib.options;
                   proxy_pass  $ssl_preread_server_name:443;
                   ssl_preread on;
 
-                  access_log ${streamAccessLog};
-                  error_log ${streamErrorLog};
+                  access_log ${streamLog.access};
+                  error_log ${streamLog.error};
                 }
             '';
         };
