@@ -117,10 +117,28 @@ with lib.options;
 
       # TODO: might have to create this
       logPrefix = mkOption {
-        type = types.str;
+        type = types.nullOr types.str;
         default = null;
         description = ''
-          Sets the location to put the cached data in
+          Directory for lancache log files (access, error, upstream, stream).
+          Must be set when logToSyslog is false.
+        '';
+      };
+
+      logToSyslog = mkOption {
+        type = types.bool;
+        default = false;
+        description = ''
+          Send all nginx log output to syslog instead of files.
+          On systemd-based systems (e.g. NixOS), journald captures syslog
+          messages automatically, so logs appear in `journalctl`.
+
+          Different nginx contexts use distinct syslog tags for filtering:
+          - `lancache` (primary cache engine)
+          - `lancache_upstream` (upstream redirect handler)
+          - `lancache_stream` (TLS SNI passthrough)
+
+          When this is true, logPrefix is not used.
         '';
       };
 
@@ -181,6 +199,52 @@ with lib.options;
   config =
     let
       cfg = config.services.lancache;
+
+      # Build access_log / error_log targets for each nginx context.
+      # When logToSyslog is enabled, logs go to syslog with a per-context tag;
+      # otherwise they go to files under logPrefix.
+      logTarget =
+        {
+          tag,
+          accessFile,
+          errorFile,
+          format ? null,
+        }:
+        let
+          syslog = "syslog:server=unix:/dev/log,facility=local6,tag=${tag}";
+          fmtSuffix = lib.optionalString (format != null) " ${format}";
+        in
+        {
+          access =
+            if cfg.logToSyslog then
+              "${syslog}${fmtSuffix}"
+            else
+              "${cfg.logPrefix}/${accessFile}${fmtSuffix}";
+          error =
+            if cfg.logToSyslog then
+              syslog
+            else
+              "${cfg.logPrefix}/${errorFile}";
+        };
+
+      genericLog = logTarget {
+        tag = "lancache";
+        accessFile = "access.log";
+        errorFile = "error.log";
+        format = "cachelog";
+      };
+      upstreamLog = logTarget {
+        tag = "lancache_upstream";
+        accessFile = "upstream-access.log";
+        errorFile = "upstream-error.log";
+        format = cfg.logFormat;
+      };
+      streamLog = logTarget {
+        tag = "lancache_stream";
+        accessFile = "stream-access.log";
+        errorFile = "stream-error.log";
+        format = "stream_basic";
+      };
 
       isNonEmpty = (
         domain:
@@ -262,6 +326,16 @@ with lib.options;
     lib.mkIf cfg.enable
 
       {
+        assertions = [
+          {
+            assertion = cfg.logToSyslog || cfg.logPrefix != null;
+            message = ''
+              services.lancache: either set logPrefix (for file-based logging)
+              or set logToSyslog = true (for syslog/journald logging).
+            '';
+          }
+        ];
+
         services.lancache.domainIndex = index;
 
         # TODO: only add this if this isn't a path nginx can write to
@@ -363,8 +437,8 @@ with lib.options;
 
             extraConfig = # nginx
               ''
-                access_log ${cfg.logPrefix}/access.log cachelog;
-                error_log ${cfg.logPrefix}/error.log;
+                access_log ${genericLog.access};
+                error_log ${genericLog.error};
 
                 # sites-available/cache.conf.d/10_root.conf
                 resolver ${cfg.upstreamDns} ipv6=off;
@@ -542,8 +616,8 @@ with lib.options;
                 ''
                   # No access_log tracking as all requests to this instance are already logged through monolithic
 
-                  access_log ${cfg.logPrefix}/upstream-access.log ${cfg.logFormat};
-                  error_log ${cfg.logPrefix}/upstream-error.log;
+                  access_log ${upstreamLog.access};
+                  error_log ${upstreamLog.error};
 
                   #include /etc/nginx/sites-available/upstream.conf.d/*.conf;
                   #10_resolver.conf
@@ -614,8 +688,8 @@ with lib.options;
                   proxy_pass  $ssl_preread_server_name:443;
                   ssl_preread on;
 
-                  access_log ${cfg.logPrefix}/stream-access.log stream_basic;
-                  error_log ${cfg.logPrefix}/stream-error.log;
+                  access_log ${streamLog.access};
+                  error_log ${streamLog.error};
                 }
             '';
         };
